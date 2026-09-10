@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CycloneVision AI — Cyclone Track &amp; Intensity Prediction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<header class="navbar">
+  <div class="navbar-inner">
+    <div class="brand">
+      <span class="brand-icon">🌪️</span>
+      <span class="brand-name">CycloneVision <span class="accent-text">AI</span></span>
+    </div>
+    <nav class="nav-links">
+      <a href="#observations">Data Entry</a>
+      <a href="#result-section">Forecast</a>
+      <a href="#map-section">Track Map</a>
+      <a href="#summary-section">Summary</a>
+    </nav>
+    <div class="nav-status" id="model-status-pill">
+      <span class="status-dot"></span> Checking models…
+    </div>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero-wrap">
+  <div class="hero">
+    <div class="hero-eyebrow">🌪️ AI Cyclone Intelligence</div>
+    <h1 class="hero-title">CycloneVision AI</h1>
+    <p class="hero-sub">
+      Tropical cyclone track, intensity and risk prediction — trained on historical
+      IBTrACS best-track data to forecast a storm's next position, wind speed and
+      category from two consecutive observations.
+    </p>
+    <div class="hero-tags">
+      <div class="tag">📍 Track Forecasting</div>
+      <div class="tag">💨 Intensity Prediction</div>
+      <div class="tag">⚠️ Risk Scoring</div>
+      <div class="tag">🗺️ Live Map Visualization</div>
+    </div>
+    <p class="hero-caption">
+      Historical IBTrACS cyclone-track-data prototype. For research and decision-support
+      demonstration only; not an official IMD warning system.
+    </p>
+  </div>
+</section>
+
+<main class="page">
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="section-card" id="settings">
+    <div class="section-eyebrow"><span class="section-num">⚙</span>Prediction Settings</div>
+    <div class="section-title">Configure Forecast Horizon</div>
+
+    <div class="settings-grid">
+      <div class="field">
+        <label for="time_gap_hours">Time gap between observations</label>
+        <select id="time_gap_hours">
+          <option value="3">3 hours</option>
+          <option value="6" selected>6 hours</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="current_date">Current observation date</label>
+        <input type="date" id="current_date">
+      </div>
+
+      <div class="field">
+        <label for="current_time">Current observation time (UTC)</label>
+        <input type="time" id="current_time">
+      </div>
+    </div>
+
+    <details class="model-inputs-note">
+      <summary>📥 What does the model use?</summary>
+      <div class="model-inputs-grid">
+        <div>
+          <strong>Previous observation</strong>
+          <p>Latitude · Longitude · Wind · Pressure</p>
+        </div>
+        <div>
+          <strong>Current observation</strong>
+          <p>Latitude · Longitude · Wind · Pressure</p>
+        </div>
+        <div>
+          <strong>Auto-calculated</strong>
+          <p>Δ Lat/Lon, Δ Wind/Pressure, storm speed &amp; direction, month &amp; hour</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= DATA ENTRY ================= -->
+  <section class="section-card" id="observations">
+    <div class="section-eyebrow"><span class="section-num">1</span>Data Entry</div>
+    <div class="section-title">Enter Cyclone Observations</div>
+
+    <div class="info-banner">
+      ℹ️ Enter two consecutive observations of the same cyclone. Wind is in knots and central pressure is in hPa.
+    </div>
+
+    <form id="prediction-form">
+      <div class="obs-grid">
+        <div class="obs-col">
+          <h3>🕓 Previous Observation</h3>
+
+          <div class="field">
+            <label for="prev_lat">Previous Latitude (°N)</label>
+            <input type="number" id="prev_lat" min="0" max="40" step="0.1" value="13.90" required>
+          </div>
+          <div class="field">
+            <label for="prev_lon">Previous Longitude (°E)</label>
+            <input type="number" id="prev_lon" min="40" max="120" step="0.1" value="86.80" required>
+          </div>
+          <div class="field">
+            <label for="prev_wind">Previous Wind Speed (knots)</label>
+            <input type="number" id="prev_wind" min="0" max="200" step="1" value="40" required>
+          </div>
+          <div class="field">
+            <label for="prev_pressure">Previous Central Pressure (hPa)</label>
+            <input type="number" id="prev_pressure" min="850" max="1050" step="1" value="995" required>
+          </div>
+        </div>
+
+        <div class="obs-col">
+          <h3>📍 Current Observation</h3>
+
+          <div class="field">
+            <label for="lat">Current Latitude (°N)</label>
+            <input type="number" id="lat" min="0" max="40" step="0.1" value="14.50" required>
+          </div>
+          <div class="field">
+            <label for="lon">Current Longitude (°E)</label>
+            <input type="number" id="lon" min="40" max="120" step="0.1" value="86.20" required>
+          </div>
+          <div class="field">
+            <label for="wind">Current Wind Speed (knots)</label>
+            <input type="number" id="wind" min="0" max="200" step="1" value="45" required>
+          </div>
+          <div class="field">
+            <label for="pressure">Current Central Pressure (hPa)</label>
+            <input type="number" id="pressure" min="850" max="1050" step="1" value="990" required>
+          </div>
+        </div>
+      </div>
+
+      <div id="form-error" class="error-banner hidden"></div>
+
+      <button type="submit" class="predict-btn" id="predict-btn">
+        🔮 Predict Next Cyclone Position and Intensity
+      </button>
+    </form>
+  </section>
+
+  <!-- ================= INITIAL STATE ================= -->
+  <div class="info-banner" id="initial-state">
+    Fill both observations and click <strong>Predict Next Cyclone Position and Intensity</strong>.
+  </div>
+
+  <!-- ================= RESULTS (hidden until predicted) ================= -->
+  <div id="results" class="hidden">
+
+    <!-- RESULT HEADER -->
+    <section class="section-card" id="result-section">
+      <div class="section-eyebrow"><span class="section-num">2</span>AI Forecast</div>
+      <div class="section-title">AI Prediction Result</div>
+
+      <div id="risk-banner" class="risk-banner">
+        <div class="risk-icon" id="risk-icon"></div>
+        <div>
+          <div class="risk-title" id="risk-title"></div>
+          <div class="risk-sub" id="risk-sub"></div>
+        </div>
+      </div>
+
+      <div class="metric-grid" id="prediction-metrics"></div>
+    </section>
+
+    <!-- PREDICTED MOVEMENT -->
+    <section class="section-card">
+      <div class="section-eyebrow"><span class="section-num">3</span>Forecast Vector</div>
+      <div class="section-title">Predicted Movement</div>
+      <div class="metric-grid" id="predicted-movement-metrics"></div>
+    </section>
+
+    <!-- OBSERVED MOVEMENT -->
+    <section class="section-card">
+      <div class="section-eyebrow"><span class="section-num">4</span>Historical Vector</div>
+      <div class="section-title">Current / Observed Movement</div>
+      <div class="metric-grid" id="observed-movement-metrics"></div>
+    </section>
+
+    <!-- MAP -->
+    <section class="section-card" id="map-section">
+      <div class="section-eyebrow"><span class="section-num">5</span>Geospatial View</div>
+      <div class="section-title">Predicted Cyclone Track</div>
+
+      <div id="track-map"></div>
+
+      <div class="legend-row" id="legend-row"></div>
+      <p class="map-caption">Track: Previous → Current → AI Predicted</p>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="section-card" id="summary-section">
+      <div class="section-eyebrow"><span class="section-num">6</span>Summary</div>
+      <div class="section-title">Decision-Support Summary</div>
+
+      <table class="summary-table" id="summary-table">
+        <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <details class="model-inputs-note" style="margin-top:18px;">
+        <summary>🔍 View Model Input Features</summary>
+        <p class="muted-text">These are the exact features generated before sending the data to the trained models.</p>
+        <pre id="feature-json" class="feature-json"></pre>
+      </details>
+    </section>
+
+    <div class="footer-note">
+      ℹ️ This is an academic prototype trained using historical cyclone best-track data.
+      Real-world warnings must always be validated against official IMD/RSMC weather bulletins.
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <p>CycloneVision AI · Research &amp; decision-support prototype · Powered by scikit-learn models served via a local API</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
